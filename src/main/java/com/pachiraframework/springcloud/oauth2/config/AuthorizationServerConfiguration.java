@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -37,9 +40,11 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		String secret = passwordEncoder.encode("secret");
 		clients.inMemory() // 使用in-memory存储
 				.withClient("client") // client_id
-				.secret("secret") // client_secret
+				.secret(secret) // client_secret
 				//.autoApprove(true)
 				.authorizedGrantTypes("authorization_code","refresh_token") // 该client允许的授权类型
 				.scopes("app"); // 允许的授权范围
@@ -49,7 +54,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 	public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 		// @formatter:off
 		endpoints.authenticationManager(authenticationManager).userDetailsService(userDetailsService)
-				.accessTokenConverter(accessTokenConverter());
+				.accessTokenConverter(accessTokenConverter()).allowedTokenEndpointRequestMethods(HttpMethod.GET, HttpMethod.POST); //支持GET  POST  请求获取token;
 		// @formatter:on
 	}
 
